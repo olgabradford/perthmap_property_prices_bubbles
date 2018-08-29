@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+<script src="https://d3js.org/d3-transition.v1.min.js"></script>
+<script src="https://d3js.org/d3-drag.v1.min.js"></script>
+  <script src="https://d3js.org/d3-zoom.v1.min.js"></script>
+    <style> 
+      circle {
+        fill: orange;
+        stroke: black;
+        stroke-width: 1.5;
+        opacity: 0.3;
+      }
+
+
+      h2 {
+        text-align:  center;
+        color: black;
+
+      }
+      h3 {
+        text-align:  center;
+        color: black;
+
+      }
+
+      div.price_buttons {
+          position: fixed;
+          top: 5px;
+          left: 50px;    
+      }
+
+      div.price_buttons div {
+          background-color: rgb(251,201,127);
+          padding: 3px;
+          margin: 7px;
+      }
+
+       </style>
+      
+    <title>Perth Property analytics</title>
+
+  <script type="text/javascript">
+  /*
+    Use D3 to load the GeoJSON file
+    */
+
+    d3.getEvent = () => require("d3-selection").event;
+
+         function draw(geo_data) {
+        "use strict";
+        var margin = 25,
+            width = 1200 - margin,
+            height = 1900 - margin;
+    //        width = 1200 - margin,
+   //         height = 1900 - margin;
+
+        d3.select('body')
+          .append("h2")
+          .text("Median Perth house prices in 2017 and annual change in %");
+
+
+        var zoomExtent = d3.zoom().scaleExtent([1, 20]);  
+        function zoom() {
+             g.attr("transform", d3.event.transform)
+           }
+       //circles
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width + margin)
+            .attr("height", height + margin)
+            .call(d3.behavior.zoom().on("zoom", function () {
+                 svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")")
+                 }))
+            .append('g')
+            .attr('class', 'map');
+
+
+            
+
+      // to better position a map use scale and translate
+        var projection=d3.geo.mercator()
+                              .center([115.6,-31.5])  //center of the map. coordinates around perth -31 lift map up from -30
+                              .scale(90000) //zoom
+                              .translate([width/20, height/20]);  //move center of the map
+
+
+        var path = d3.geo.path().projection(projection);
+   //     debugger;
+   //     var zoomExtent = d3.zoom().scaleExtent([1, 20]);
+
+     //    function zoom() {
+     //          g.attr("transform", d3.event.transform)
+    //     }
+        var map = svg.selectAll('path')
+                      .data(geo_data.features)
+                      .enter()
+                      .append('path')
+                      .attr('d', path)
+                      //changing fill of the maps from black
+                      .style('fill', 'lightblue')
+                      .style('stroke', 'black')
+                      .style('stroke-width', 0.5)
+                      .call(zoomExtent
+                           .on("zoom", zoom))
+                      ;
+        //all good till here
+     //   debugger;
+
+        //define an array of perth_suburb
+
+        var perth_suburb=["Alexander Heights","AlfredCove","Alkimos","Applecross","Ardross","Armadale","Ascot","Ashfield",
+                 "Attadale","Atwell","Aveley",
+"Balcatta","Balga","Ballajura","Bassendean","Bateman","Bayswater","Beaconsfield","Beckenham","Bedford","Bedfordale",
+                 "Beechboro","Beechina","Beeliar","Beldon","Bellevue","Belmont","Bentley","Bertram","BibraLake",
+                 "Bickley","Bicton","Booragoon","Boya","Brentwood","Bullsbrook",
+"Brigadoon","Brookdale","Bull Creek","Bullsbrook","Burns Beach", "Burswood","Butler","Byford","Camillo",
+"Calista","CanningVale","Cannington","Cardup","Carine","Carlisle","Carmel","Carramar","Casuarina",
+                 "Caversham","ChampionLakes","Carabooda","Carramar",
+"Churchlands","City Beach","Claremont","Clarkson","Cloverdale","Como","Connolly","Coogee","Coolbellup",
+                 "Coolbinia","Cooloongup",
+"Cottesloe","Craigie","Crawley","Currambine",
+"Daglish","Dalkeith","Darch","Darling Downs","Darlington","Dianella","Doubleview","Duncraig",
+"East Cannington","East Fremantle","East Perth","East Victoria Park","Eden Hill","Edgewater",
+                 "Ellenbrook", "Embleton","Eglinton",
+            "Ferndale","Floreat","Forrestdale","Forrestfield","Fremantle",
+"Gnangara","Girrawheen","Glen Forrest","Glendalough","Gooseberry Hill","Gosnells","Greenmount","Greenwood",
+                 "Guildford","Gwelup",
+"Hamersley","Hamilton Hill","Hazelmere","Heathridge","Helena Valley","Henley Brook","High Wycombe",
+                 "Highgate","Hillarys","Hillman","Hilton","Hocking","Hovea","Huntingdale",
+"Iluka","Inglewood","Innaloo",
+                 "Jandakot","Jindalee","Jolimont","Joondalup","Joondanna","Jandabup",
+"Kalamunda","Kallaroo","Karawara","Kardinya","Karrinyup","Kelmscott","Kensington","Kenwick","Kewdale",
+                 "Kiara","Kingsley", "Kings park", "Kinross","Koondoola","Koongamia",
+"Landsdale","Langford","Lathlain","Leda","Leederville","Leeming","Lesmurdie","Lockridge","Lynwood",
+"Maddington","Madeley","Mahogany Creek","Maida Vale","Manning","Marangaroo","Mariginup","Marmion",
+"Martin","Maylands","Medina","Melville","Menora","Merriwa","Middle Swan","Midland","Midvale","Millendon",
+"Mindarie","Mirrabooka","Morley","Mosman Park","Mount Claremont",
+"Mount Hawthorn","Mount Lawley","Mount Nasura","Mount Pleasant","Mount Helena","Mount Richon","Mullaloo",
+"Mundaring","Mundijong","Munster","Murdoch","Myaree",
+"Nedlands","Neerabup","Nollamara","Noranda","North Beach","North Fremantle","North Lake","North Perth",
+                 "Northbridge","Novergup",
+"Oakford","Ocean Reef","Oldbury","Orelia","Osborne Park",
+"Padbury","Palmyra","Parkwood","Parmelia","Pearsall","Peppermint Grove Beach","Perth","Pickering Brook",
+                 "Piesse Brook","Port Kennedy",
+"Queens Park","Quinns Rocks",
+"Redcliffe","Ridgewood","Riverton","Rivervale","Rockingham","Roleystone","Rossmoyne",
+"Safety Bay","Salter Point","Samson","Scarborough","Secret Harbour","Seville Grove","Shelley",
+"Shenton Park","Shoalwater","Sinagra",
+"Singleton","Sorrento","South Fremantle","South Guildford","South Lake","South Perth","Southern River",
+                 "Spearwood",
+"St James","Stirling","Stratton","Subiaco","Success","Swan View","Swanbourne",
+"Tamala park","Tapping","The Vines","Thornlie","Trigg","Tuart Hill","Two Rocks",
+"Upper Swan","Victoria Park","Viveash","Waikiki","Walliston","Wandi","Wanneroo","Warnbro","Warwick",
+                 "Waterford","Watermans Bay","Wangara",
+"Wattle Grove","Wattleup","Wellard","Wembley","Wembley Downs","West Leederville","West Perth",
+                 "West Swan",
+"Westminster","White Gum Valley","Willagee","Willetton","Wilson","Winthrop",
+                 "Woodbridge","Woodlands",
+"Woodvale","Yanchep","Yangebup","Yokine"];
+    
+  //console.log(perth_suburb); all good, array loaded
+
+    function plot_data(data) {
+      //draw circles based on price range
+     //  debugger;
+      function median_price(leaves) {
+       var median_price = d3.mean(leaves, function(d) {
+        return d['med_price_2017'];
+       });  
+    //   debugger;
+        //longitude using map function - transforms every element of an array and transforms an array
+        var coords=leaves.map(function(d) {
+          return projection([+d.long, +d.lat]); //projectionis like scale
+        });
+
+     //   debugger;
+        //calculate mean function
+        //x element is first elemtn of array d[0]
+        var center_x = d3.mean(coords, function(d) {
+                 return d[0];
+        });
+       //y element is second element of array d[1]
+        var center_y = d3.mean(coords, function(d) {
+                 return d[1];
+        }); 
+    //    debugger;            
+        return {
+            'med_price_2017': median_price,
+            'x': center_x, //x - pixel coordinate
+            'y': center_y,  //y - pixel coordinate
+      //      'perth_suburb': perth_suburb
+               };
+        }  //closed function median_price
+      //  debugger;
+        var nested = d3.nest()
+                            .key(function(d) {
+                              return d['perth_suburb'];
+                            })
+                            .rollup(median_price)  //aggregation
+                            .entries(data); //passes data throw nested pipeline
+            //work out maximum price out of all suburbs
+            var med_2017_max = d3.max(nested, function(d) {
+              return d.values['med_price_2017']
+            });
+         //   debugger;
+            //convert median house price to pixels
+            var radius = d3.scale.sqrt()  //area = pi*r^2
+                            .domain([0, med_2017_max])
+                            .range([0,10]);
+         //   debugger;
+            function key_func(d) {
+              return d['key'];
+            }
+
+            svg.append('g')
+              .attr("class", "bubble")
+              .selectAll("circle")
+              //sorting data to avoid missing smaller overlapping data samples
+
+              .data(nested.sort(function(a, b){ 
+                  return b.values['med_price_2017'] - a.values['med_price_2017'];
+               }), key_func) 
+              .enter().append("circle")
+               .style("fill", "blue")     
+              //place circles and set their radii to value of 5
+              .attr('cx', function(d) {return d.values['x']; }) //set center x values
+              .attr('cy', function(d) {return d.values['y']; }) //set center y values
+              .attr('r', function(d) {
+                   return radius(d.values['med_price_2017']) //set radius
+          //    .append("h2")
+          //    .text("test")
+
+               })
+           //   .append("h3")
+           //   .text("test")
+              ;
+
+
+
+      function text_suburb(leaves) {
+         var text_suburb = function(d) {
+         return d.values['perth_suburb'];
+         };  
+       //  var text_suburb = (leaves, function(d) {
+       //  return d['perth_suburb'];
+       //  });
+
+    //   debugger;
+        //longitude using map function - transforms every element of an array and transforms an array
+        var coords_t=leaves.map(function(d) {
+          return projection([+d.long, +d.lat]); //projectionis like scale
+        });
+
+     //   debugger;
+        //calculate mean function
+        //x element is first elemtn of array d[0]
+        var ct_x = d3.mean(coords_t, function(d) {
+                 return d[0];
+        });
+       //y element is second element of array d[1]
+        var ct_y = d3.mean(coords_t, function(d) {
+                 return d[1];
+        }); 
+    //    debugger;   
+
+        return {
+            'x': ct_x, //x - pixel coordinate
+            'y': ct_y,  //y - pixel coordinate
+            'perth_suburbt': perth_suburb.values()
+               };
+        }  //closed function median_price
+        
+        var tnested = d3.nest()
+                            .key(function(d) {
+                              return d['perth_suburb'];
+                            })
+                            .rollup(text_suburb)  //aggregation
+                            .entries(data); //passes data throw nested pipeline
+                         
+       //     function key_func(d) {
+     //         return d['key'];
+     //       }
+
+            svg.append('g')
+              .attr("class", "text")
+              .selectAll("text")
+              .data(tnested)
+              //sorting data to avoid missing smaller overlapping data samples
+
+         //     .data(nested.sort(function(a, b){ 
+         //         return b.values['med_price_2017'] - a.values['med_price_2017'];
+        //      }), key_func) 
+                   
+              .enter()
+              .append("text")
+              //place circles and set their radii to value of 5
+              .attr('x', function(d) {return d.values['x']; }) //set center x values
+              .attr('y', function(d) {return d.values['y']; }) //set center y values
+            //  .text(JSON.stringify(tnested))
+             // .text( function(d) {return d.values['perth_suburbt']; })
+              .text( function(d) {return d.key; })
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "8px")
+              .attr("fill","black")       ;
+          //    .append("h2")
+          //    .text("test")
+
+       
+          //START ANIMATION, display percentages of change in house value 
+
+          //remove old circles
+
+
+
+     function median_percent(leaves) {
+
+       var median_percent = d3.mean(leaves, function(d) {
+        return d['buble_change'];
+       });  
+ //      debugger;
+        //longitude using map function - transforms every element of an array and transforms an array
+        var coordsb=leaves.map(function(d) {
+          return projection([+d.long, +d.lat]); //projectionis like scale
+        });
+
+  //      debugger;
+        //calculate mean function
+        //x element is first elemtn of array d[0]
+        var center_xb = d3.mean(coordsb, function(d) {
+                 return d[0];
+        });
+       //y element is second element of array d[1]
+        var center_yb = d3.mean(coordsb, function(d) {
+                 return d[1];
+        }); 
+
+        var xb_shift=center_xb-10;
+    //    debugger;            
+        return {
+            'med_percent': median_percent,
+            'xb': xb_shift, //x - pixel coordinate
+            'yb': center_yb,  //y - pixel coordinate
+      //      'perth_suburb': perth_suburb
+               };
+        }  //closed function median_price
+    //  debugger;
+        var nestedb = d3.nest()
+                            .key(function(d) {
+                              return d['perth_suburb'];
+                            })
+                            .rollup(median_percent)  //aggregation
+                            .entries(data); //passes data throw nested pipeline
+            //work out maximum price out of all suburbs
+            var med_2017_maxb = d3.max(nestedb, function(d) {
+              return d.values['med_percent']
+            });
+   //         debugger;
+            //convert median house price to pixels
+            var radiusb = d3.scale.sqrt()  //area = pi*r^2
+                            .domain([0, med_2017_maxb])
+                            .range([0,12]);
+            debugger;  
+            function key_func(d) {
+              return d['key'];
+            }
+
+            svg.append('g')
+  //            .transition()
+   //           .duration(1000)
+              .attr("class", "bubble")
+              .selectAll("circle")
+              //sorting data to avoid missing smaller overlapping data samples
+
+              .data(nestedb.sort(function(a, b){ 
+                  return b.values['buble_change'] - a.values['buble_change'];
+               }), key_func) 
+                   
+              .enter().append("circle")
+                .style("fill", "#F2D1D4")
+              //place circles and set their radii to value of 5
+              .attr('cx', function(d) {return d.values['xb']; }) //set center x values
+              .attr('cy', function(d) {return d.values['yb']; }) //set center y values
+              .attr('r', function(d) {
+                   return radiusb(d.values['med_percent']) //set radius
+          //    .append("h2")
+          //    .text("test")
+
+               })
+           //   .append("h3")
+           //   .text("test")
+              ;
+
+
+
+
+             
+     }
+       
+
+
+  d3.tsv("buble_percent2.tsv", function(d) {   //loadind house price data
+        d['med_price_2017'] = +d['med_price_2017'];
+          return d;
+        }, plot_data);  //pass data to plot_points function
+   
+    };
+   
+      </script>
+  </head>
+<body>
+<script type="text/javascript">
+
+    
+d3.json("geojson_final_perth_metro.json", draw);  //list of suburbs is not yet complete geojson format, suburbs and polygons
+</script>
+</body>
+</html>
